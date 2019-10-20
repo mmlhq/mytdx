@@ -7,7 +7,8 @@ import mysql.connector
 api = TdxHq_API()
 
 cnx = mysql.connector.connect(user='root',password='lihq8087*)*&',host='127.0.0.1',database='tdx')
-cursor = cnx.cursor()
+cur_list = cnx.cursor(buffered=True)
+cur_tran = cnx.cursor(buffered=True)
 
 query_list = ("SELECT code,name,market FROM tdx.list ")
 
@@ -19,11 +20,11 @@ with api.connect('119.147.212.81', 7709):
 
     data=[]
 
-    cursor.execute(query_list)
-    for (code,name,market) in cursor:
+    cur_list.execute(query_list)
+    for (code,name,market) in cur_list:
         # data=api.get_transaction_data(TDXParams.MARKET_SZ, '000001', 4001,6000)
         # data+=api.get_transaction_data(TDXParams.MARKET_SZ, '000001', 2001,4000)
-        data=api.get_transaction_data(TDXParams.MARKET_SZ, '000001',    0,2000)
+        data=api.get_transaction_data(market , code ,    0,20)
 
         count = len(data);
 
@@ -33,15 +34,15 @@ with api.connect('119.147.212.81', 7709):
             vol  =data[i]['vol']
             num  =data[i]['num']
             buyorsell = data[i]['buyorsell']
-            data_hq=(1,date(2019,10,18),time,price,vol,num,buyorsell)
+            data_hq=(code,date(2019,10,18),time,price,vol,num,market)
             # Insert new employee
-            cursor.execute(add_hq, data_hq)
-#            cnx.commit()
+            cur_tran.execute(add_hq, data_hq)
+            cnx.commit()
+        cur_tran.close
 
-    cursor.close()
+    cur_list.close()
     cnx.close()
     
     print(count)
     print("Hello world!")
     api.disconnect()
-
